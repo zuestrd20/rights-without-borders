@@ -42,7 +42,7 @@
       const link = el('a', 'source-link', source.label || '查看原始資料');
       link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
       link.setAttribute('aria-label', (source.label || '查看原始資料') + '（在新分頁開啟）');
-      const arrow = el('span', '', '↗'); arrow.setAttribute('aria-hidden', 'true'); link.append(arrow);
+      const arrow = el('span', 'diagonal-arrow', ''); arrow.setAttribute('aria-hidden', 'true'); link.append(arrow);
       container.append(link);
     });
     return container;
@@ -62,7 +62,7 @@
     const header = el('div', 'country-card-top');
     const meta = el('div', 'country-meta');
     meta.append(el('span', '', country.region || '世界觀察'));
-    const glyph = el('span', 'country-glyph', '↗'); glyph.setAttribute('aria-hidden', 'true'); meta.append(glyph);
+    const glyph = el('span', 'country-glyph diagonal-arrow', ''); glyph.setAttribute('aria-hidden', 'true'); meta.append(glyph);
     header.append(meta, el('h3', '', country.name), el('p', 'country-intro', country.intro));
     const tags = el('div', 'country-topics');
     [...new Set(items.map((item) => item.topic).filter(Boolean))].forEach((topic) => tags.append(el('span', 'topic-tag', topic)));
@@ -219,15 +219,91 @@
     result.hidden = false; result.focus({ preventScroll: true }); result.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
   });
   $('quiz-form').addEventListener('reset', () => { clearFeedback(); $('quiz-progress').textContent = '已選擇 0 / ' + questions.length + ' 題'; });
-  let printState = null;
-  window.addEventListener('beforeprint', () => {
-    if (printState) return;
-    printState = Array.from(document.querySelectorAll('details')).map((node) => ({ node, open: node.open }));
-    printState.forEach(({ node }) => { node.open = true; });
-  });
-  window.addEventListener('afterprint', () => {
-    if (!printState) return; printState.forEach(({ node, open }) => { node.open = open; }); printState = null;
-  });
+
+  function renderPrintSummary() {
+    const root = $('print-summary');
+    root.replaceChildren();
+    let website = '';
+    try {
+      const url = new URL(window.location.href);
+      url.hash = ''; url.search = '';
+      website = url.href;
+    } catch { website = '請回到本網站查看完整資料與來源。'; }
+    const references = (item) => {
+      const paragraph = el('p', 'print-reference');
+      if (item.date) paragraph.append(document.createTextNode('資料時間／脈絡：' + item.date + '。'));
+      const valid = (Array.isArray(item.sources) ? item.sources : []).filter((source) => safeUrl(source.url));
+      valid.slice(0, 2).forEach((source, index) => {
+        paragraph.append(document.createTextNode(index ? '；' : '來源：'));
+        const a = el('a', '', source.label || '原始資料');
+        a.href = safeUrl(source.url); paragraph.append(a);
+      });
+      return paragraph;
+    };
+    const sheet = (number, subtitle) => {
+      const page = el('section', 'print-sheet');
+      const header = el('div', 'print-sheet-head');
+      header.append(el('span', '', '權利不設限 · 學習摘要'), el('span', '', subtitle + ' / ' + number + ''));
+      page.append(header); root.append(page); return page;
+    };
+    const observation = (country) => {
+      const item = itemsOf(country)[0];
+      if (!item) return el('p', '', country.name + '：暫無收錄資料。');
+      const article = el('article', 'print-observation');
+      const title = el('h3', '', country.name);
+      title.append(el('span', '', item.topic + ' · ' + item.kind));
+      article.append(title, el('h4', '', item.title), el('p', '', item.text), references(item));
+      return article;
+    };
+    const first = sheet('01', '從世界開始');
+    first.append(el('h1', '', '權利不設限'), el('p', 'print-lead', '看見不同處境，也珍惜需要一起維護的權利。'), el('p', '', '閱讀時，先問法律如何規定，再問生活是否落實。本摘要為各地選取一則觀察，不能代表一個地區的全部經驗。'));
+    first.append(el('h2', '', '世界觀察 · 上'));
+    data.countries.slice(0, 4).forEach((country) => first.append(observation(country)));
+    const second = sheet('02', '對照與反思');
+    second.append(el('h2', '', '世界觀察 · 下'));
+    data.countries.slice(4).forEach((country) => second.append(observation(country)));
+    const taiwan = el('section', 'print-taiwan');
+    taiwan.append(el('h2', '', '回到臺灣：保障值得珍惜，也要持續維護'));
+    taiwan.append(el('p', '', '受教、工作與參與公共生活的保障，經過爭取與改革而來。以下列出幾項制度重點；點擊標題可閱讀法規來源。'));
+    const baselines = el('ul', 'print-baselines');
+    ['教育', '就業與經濟', '政治參與', '免於暴力', '財產繼承'].forEach((topic) => {
+      const item = data.taiwan.find((entry) => entry.topic === topic && string(entry.kind).includes('法律'));
+      if (!item) return;
+      const li = el('li');
+      const source = (Array.isArray(item.sources) ? item.sources : []).find((entry) => safeUrl(entry.url));
+      if (source) {
+        const a = el('a', '', item.title); a.href = safeUrl(source.url); li.append(a);
+      } else li.textContent = item.title;
+      baselines.append(li);
+    });
+    taiwan.append(baselines);
+    const gap = data.taiwan.find((item) => item.kind === '執行落差');
+    if (gap) {
+      const box = el('article', 'print-gap');
+      box.append(el('h3', '', '仍要努力：' + gap.title), el('p', '', gap.text), references(gap));
+      taiwan.append(box);
+    }
+    second.append(taiwan);
+    const third = sheet('03', '帶問題走進討論');
+    third.append(el('h2', '', '寫下你的觀察，和同學一起想'));
+    third.append(el('p', 'print-lead', '先描述證據，再說出理由。談制度與行為，避免替群體貼標籤；你也可以選擇不分享個人經驗。'));
+    const prompts = [
+      ['有了平等的法律，就有平等的生活嗎？', '選一則資料，找出法律承諾與日常處境。你還需要什麼證據，才能理解兩者的距離？'],
+      ['誰的聲音，還沒出現在資料裡？', '同一地區的女性是否都有相同經驗？從城鄉、收入、身心障礙或移民身分，提出一個新的問題。'],
+      ['如果是我們的校園，可以先改變什麼？', '挑一個與選擇、參與或安全有關的情境。提出可實行的做法，想想要邀請誰一起討論。']
+    ];
+    prompts.forEach((prompt, index) => {
+      const article = el('article', 'print-prompt');
+      article.append(el('h3', '', String(index + 1).padStart(2, '0') + ' / ' + prompt[0]), el('p', '', prompt[1]));
+      article.append(el('div', 'print-writing-line'), el('div', 'print-writing-line')); third.append(article);
+    });
+    const method = el('section', 'print-method');
+    method.append(el('h3', '', '讀資料，也要讀它的限制'), el('p', '', '參考日期：2026 年 10 月 6 日。每則資料的年份與脈絡另列；舊報告與歷史事件不能保證今日情況完全相同。法律、執行情況與個案須分開閱讀，不同定義與調查範圍的資料不能直接排名。'), el('p', '', '本摘要為公民與性別平等教育用途，不提供個案法律意見。來源標題為可點擊連結；完整資料、案例與來源清單請見網站。'));
+    const web = el('p', 'print-web', '完整網站：');
+    const link = el('a', '', website); link.href = website; web.append(link);
+    method.append(web); third.append(method);
+  }
+
   $('print-button').addEventListener('click', () => window.print());
-  renderCountries(); renderComparison(); renderCases(); renderSources(); renderQuiz();
+  renderCountries(); renderComparison(); renderCases(); renderSources(); renderQuiz(); renderPrintSummary();
 })();

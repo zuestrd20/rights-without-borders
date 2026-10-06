@@ -759,7 +759,18 @@ window.RIGHTS_DATA = {
       ]
     },
     {
-      "date": "2026-06／09（報導）",
+      "date": "2026-07-17",
+      "title": "臺灣：新一輪審查指出尚待改善之處",
+      "text": "第5次CEDAW國家報告國際專家審查完成，關注照顧移工、同值同酬與不利處境女性參與決策的障礙。既有成果也需要持續檢視。",
+      "sources": [
+        {
+          "label": "行政院｜2026-07-17 第5次CEDAW國際專家審查重點",
+          "url": "https://www.ey.gov.tw/Page/9277F759E41CCD91/5fe9fc59-6399-4f1e-8675-6c9d7e9c7329"
+        }
+      ]
+    },
+    {
+      "date": "2026-09-29（報導）",
       "title": "74 鞭判決與上訴結果",
       "text": "6 月 HRANA 報導 Ahmadi 與團隊遭判 74 鞭及兩年出境及藝術活動禁令；9 月《The National》報導上訴遭駁回。截至 2026-10-06，本頁未取得法院判決全文，也未找到鞭刑已執行的可靠證實。",
       "sources": [
@@ -770,17 +781,6 @@ window.RIGHTS_DATA = {
         {
           "label": "The National｜2026-09-29，更新 09-30",
           "url": "https://www.thenationalnews.com/news/mena/2026/09/29/iranian-court-rejects-appeal-of-singer-sentenced-to-74-lashes/"
-        }
-      ]
-    },
-    {
-      "date": "2026-07-17",
-      "title": "臺灣：新一輪審查指出尚待改善之處",
-      "text": "第5次CEDAW國家報告國際專家審查完成，關注照顧移工、同值同酬與不利處境女性參與決策的障礙。既有成果也需要持續檢視。",
-      "sources": [
-        {
-          "label": "行政院｜2026-07-17 第5次CEDAW國際專家審查重點",
-          "url": "https://www.ey.gov.tw/Page/9277F759E41CCD91/5fe9fc59-6399-4f1e-8675-6c9d7e9c7329"
         }
       ]
     }
